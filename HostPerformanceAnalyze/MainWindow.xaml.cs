@@ -32,6 +32,7 @@ namespace HostPerformanceAnalyze
         private Process dwmProcess = null;
         private bool isInited = false;
         private bool isMonitoring = false;
+        private int dataCount = 0;
 
 
 
@@ -51,18 +52,32 @@ namespace HostPerformanceAnalyze
         {
             InitializeComponent();
             this.DataContext = this;
-
-            if (CheckHostProcessStatus())
+            btnStop.IsEnabled = false;
+            btnStart.IsEnabled = false;
+            Task.Factory.StartNew(() =>
             {
-                InitHandlers();
-            }
+                try
+                {
+                    if (CheckHostProcessStatus())
+                    {
+                        InitHandlers();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddLog($"Error:{ex.Message}");
+                    this.Dispatcher.Invoke(() => { btnStart.IsEnabled = true; });
+                }
+            });
         }
 
         private bool CheckHostProcessStatus()
         {
             try
             {
-                hostProcess = Process.GetProcessesByName("RoomsHost").FirstOrDefault();
+                //hostProcess = Process.GetProcessesByName("RoomsHost").FirstOrDefault();
+                //dwmProcess = Process.GetProcessesByName("dwm").FirstOrDefault();
+                hostProcess = Process.GetProcessesByName("system").FirstOrDefault();
                 dwmProcess = Process.GetProcessesByName("dwm").FirstOrDefault();
             }
             catch (Exception ex)
@@ -82,6 +97,7 @@ namespace HostPerformanceAnalyze
 
         private void InitHandlers()
         {
+            AddLog($"System Init....Start");
             var gpuDataHandler = new GPUDataHandler(hostProcess);
             gpuDataHandler.InitPerformanceCounter();
             dataHandlers.Add(gpuDataHandler);
@@ -106,19 +122,23 @@ namespace HostPerformanceAnalyze
             dataHandlers.Add(memoryDataHandler);
 
             isInited = true;
+
+            this.Dispatcher.Invoke(() => { btnStart.IsEnabled = true; });
+            AddLog($"System Init....Finish");
         }
 
         private void CollectData(int interval = 2000)
         {
-            Task.Run(() =>
+            Task.Factory.StartNew(() =>
             {
                 while (isMonitoring)
                 {
                     Thread.Sleep(interval);
                     foreach (var dataHandler in dataHandlers)
                     {
+                        dataCount++;
                         dataHandler.WriteData();
-                        AddLog("WriteData Now.......");
+                        AddLog($"WriteData Count={dataCount}");
                     }
                 }
             });
@@ -141,7 +161,10 @@ namespace HostPerformanceAnalyze
             {
                 if (!isMonitoring)
                 {
+                    ClearLog();
                     isMonitoring = true;
+                    btnStart.IsEnabled = false;
+                    btnStop.IsEnabled = true;
                     CollectData();
                 }
             }
@@ -151,7 +174,8 @@ namespace HostPerformanceAnalyze
         private void btnStop_Click(object sender, RoutedEventArgs e)
         {
             isMonitoring = false;
-
+            btnStart.IsEnabled = true;
+            btnStop.IsEnabled = false;
             var fileFullName = ExcelHelper.SaveCSV(dataHandlers);
             if (!string.IsNullOrEmpty(fileFullName))
             {
@@ -181,8 +205,18 @@ namespace HostPerformanceAnalyze
         private void AddLog(string info)
         {
             string log = $"{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}:{info}";
-            this.Dispatcher.BeginInvoke(new Action(()=> {
+            this.Dispatcher.Invoke(new Action(()=> {
                 this.LogInfos.Add(log);
+                logListBox.SelectedItem = LogInfos[LogInfos.Count - 1];
+                logListBox.ScrollIntoView(LogInfos[LogInfos.Count - 1]);
+            }));
+        }
+
+        private void ClearLog()
+        {
+            this.Dispatcher.Invoke(new Action(() => {
+                this.LogInfos.Clear();
+                this.LogInfos.Add($"{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}:ClearLog");
                 logListBox.SelectedItem = LogInfos[LogInfos.Count - 1];
                 logListBox.ScrollIntoView(LogInfos[LogInfos.Count - 1]);
             }));
