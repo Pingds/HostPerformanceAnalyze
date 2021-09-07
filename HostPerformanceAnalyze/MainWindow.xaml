@@ -10,24 +10,31 @@
     Height="450"
     mc:Ignorable="d">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
-        <Button
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Button
             x:Name="btnStart"
             Click="btnStart_Click"
             Content="Start Collect" />
-        <Button
+            <Button
             x:Name="btnStop"
             Grid.Column="1"
             Click="btnStop_Click"
             Content="Stop Collect" />
-        <Button
+            <Button
             x:Name="btnOpen"
             Grid.Column="2"
             Click="btnOpen_Click"
             Content="Open Folder" />
+        </Grid>
+        <ListBox Grid.Row="1" ItemsSource="{Binding LogInfos}" Name="logListBox"/>
     </Grid>
 </Window>

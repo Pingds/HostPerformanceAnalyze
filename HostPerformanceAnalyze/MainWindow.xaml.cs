@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -32,9 +33,24 @@ namespace HostPerformanceAnalyze
         private bool isInited = false;
         private bool isMonitoring = false;
 
+
+
+        public ObservableCollection<string> LogInfos
+        {
+            get { return (ObservableCollection<string>)GetValue(LogInfosProperty); }
+            set { SetValue(LogInfosProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for LogInfos.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty LogInfosProperty =
+            DependencyProperty.Register("LogInfos", typeof(ObservableCollection<string>), typeof(MainWindow), new PropertyMetadata(new ObservableCollection<string>()));
+
+
+
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
 
             if (CheckHostProcessStatus())
             {
@@ -51,12 +67,12 @@ namespace HostPerformanceAnalyze
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"detect RoomsHost failed. \r\n {ex}");
+                AddLog($"Error:detect RoomsHost failed. \r\n {ex}");
             }
 
             if (hostProcess == null)
             {
-                MessageBox.Show($"No RoomsHost launching, please launch RoomsHost first!");
+                AddLog($"Error:No RoomsHost launching, please launch RoomsHost first!");
                 return false;
             }
             else
@@ -102,6 +118,7 @@ namespace HostPerformanceAnalyze
                     foreach (var dataHandler in dataHandlers)
                     {
                         dataHandler.WriteData();
+                        AddLog("WriteData Now.......");
                     }
                 }
             });
@@ -159,6 +176,16 @@ namespace HostPerformanceAnalyze
                 };
                 Process.Start(startInfo);
             };
+        }
+
+        private void AddLog(string info)
+        {
+            string log = $"{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}:{info}";
+            this.Dispatcher.BeginInvoke(new Action(()=> {
+                this.LogInfos.Add(log);
+                logListBox.SelectedItem = LogInfos[LogInfos.Count - 1];
+                logListBox.ScrollIntoView(LogInfos[LogInfos.Count - 1]);
+            }));
         }
     }
 }
