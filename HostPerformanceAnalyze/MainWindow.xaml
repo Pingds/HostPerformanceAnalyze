@@ -9,10 +9,26 @@
     Width="800"
     Height="450"
     mc:Ignorable="d">
+    <Window.Resources>
+        <DataTemplate x:Key="listItemTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <TextBlock Margin="2" Text="{Binding Time}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Margin="2"
+                    Text="{Binding Content}"
+                    TextWrapping="Wrap" />
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="80"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="80" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
@@ -21,20 +37,24 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
             <Button
-            x:Name="btnStart"
-            Click="btnStart_Click"
-            Content="Start Collect" />
+                x:Name="btnStart"
+                Click="btnStart_Click"
+                Content="Start Collect" />
             <Button
-            x:Name="btnStop"
-            Grid.Column="1"
-            Click="btnStop_Click"
-            Content="Stop Collect" />
+                x:Name="btnStop"
+                Grid.Column="1"
+                Click="btnStop_Click"
+                Content="Stop Collect" />
             <Button
-            x:Name="btnOpen"
-            Grid.Column="2"
-            Click="btnOpen_Click"
-            Content="Open Folder" />
+                x:Name="btnOpen"
+                Grid.Column="2"
+                Click="btnOpen_Click"
+                Content="Open Folder" />
         </Grid>
-        <ListBox Grid.Row="1" ItemsSource="{Binding LogInfos}" Name="logListBox"/>
+        <ListBox
+            Name="logListBox"
+            Grid.Row="1"
+            ItemTemplate="{StaticResource listItemTemplate}"
+            ItemsSource="{Binding LogInfos, Mode=OneWay}" />
     </Grid>
 </Window>

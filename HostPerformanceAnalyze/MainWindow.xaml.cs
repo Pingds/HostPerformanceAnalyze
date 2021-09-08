@@ -1,22 +1,13 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Threading;
 using Path = System.IO.Path;
 
 namespace HostPerformanceAnalyze
@@ -33,24 +24,29 @@ namespace HostPerformanceAnalyze
         private bool isInited = false;
         private bool isMonitoring = false;
         private int dataCount = 0;
+        private DispatcherTimer checkHostTimer;
 
 
-
-        public ObservableCollection<string> LogInfos
+        public ObservableCollection<LogModel> LogInfos
         {
-            get { return (ObservableCollection<string>)GetValue(LogInfosProperty); }
+            get { return (ObservableCollection<LogModel>)GetValue(LogInfosProperty); }
             set { SetValue(LogInfosProperty, value); }
         }
 
         // Using a DependencyProperty as the backing store for LogInfos.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty LogInfosProperty =
-            DependencyProperty.Register("LogInfos", typeof(ObservableCollection<string>), typeof(MainWindow), new PropertyMetadata(new ObservableCollection<string>()));
+            DependencyProperty.Register("LogInfos", typeof(ObservableCollection<LogModel>), typeof(MainWindow), new PropertyMetadata(new ObservableCollection<LogModel>()));
 
 
 
         public MainWindow()
         {
             InitializeComponent();
+            Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
             this.DataContext = this;
             btnStop.IsEnabled = false;
             btnStart.IsEnabled = false;
@@ -58,9 +54,31 @@ namespace HostPerformanceAnalyze
             {
                 try
                 {
+                    //firstly, check counters environment
+                    if (!CountersHelper.CheckCounterEnv())
+                    {
+                        var consoleData = CountersHelper.ResetCounterEnv();
+                        AddLog(consoleData);
+                    }
+
+                    //secondly, check process
                     if (CheckHostProcessStatus())
                     {
                         InitHandlers();
+                    }
+                    else
+                    {
+                        //timer start to check host process
+                        checkHostTimer = new DispatcherTimer(new TimeSpan(0, 0, 5), DispatcherPriority.Background, (ee, ss) =>
+                        {
+                            if (CheckHostProcessStatus())
+                            {
+                                InitHandlers();
+                                checkHostTimer.Stop();
+                                checkHostTimer = null;
+                            }
+                        }, Dispatcher);
+                        checkHostTimer.Start();
                     }
                 }
                 catch (Exception ex)
@@ -77,7 +95,7 @@ namespace HostPerformanceAnalyze
             {
                 //hostProcess = Process.GetProcessesByName("RoomsHost").FirstOrDefault();
                 //dwmProcess = Process.GetProcessesByName("dwm").FirstOrDefault();
-                hostProcess = Process.GetProcessesByName("system").FirstOrDefault();
+                hostProcess = Process.GetProcessesByName("RoomsHost").FirstOrDefault();
                 dwmProcess = Process.GetProcessesByName("dwm").FirstOrDefault();
             }
             catch (Exception ex)
@@ -204,9 +222,9 @@ namespace HostPerformanceAnalyze
 
         private void AddLog(string info)
         {
-            string log = $"{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}:{info}";
-            this.Dispatcher.Invoke(new Action(()=> {
-                this.LogInfos.Add(log);
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                this.LogInfos.Add(new LogModel(info));
                 logListBox.SelectedItem = LogInfos[LogInfos.Count - 1];
                 logListBox.ScrollIntoView(LogInfos[LogInfos.Count - 1]);
             }));
@@ -214,9 +232,10 @@ namespace HostPerformanceAnalyze
 
         private void ClearLog()
         {
-            this.Dispatcher.Invoke(new Action(() => {
+            this.Dispatcher.Invoke(new Action(() =>
+            {
                 this.LogInfos.Clear();
-                this.LogInfos.Add($"{DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss")}:ClearLog");
+                this.LogInfos.Add(new LogModel($"ClearLog"));
                 logListBox.SelectedItem = LogInfos[LogInfos.Count - 1];
                 logListBox.ScrollIntoView(LogInfos[LogInfos.Count - 1]);
             }));
