@@ -205,6 +205,63 @@ namespace HostPerformanceAnalyze
         }
     }
 
+    public class NetworkDataHandler : BaseDataHandler
+    {
+        public string NetworkCard = string.Empty;
+        public NetworkDataHandler(Process process) : base(process)
+        {
+            DataType = DataType.Network;
+            CategoryName = "Network Interface";
+            CounterName = "Current Bandwidth";
+        }
+
+        public override void InitPerformanceCounter()
+        {
+
+            PerformanceCounter bandwidthCounter = new PerformanceCounter(CategoryName, CounterName, NetworkCard);
+            float bandwidth = bandwidthCounter.NextValue();
+
+            PerformanceCounter dataSentCounter = new PerformanceCounter(CategoryName, "Bytes Sent/sec", NetworkCard);
+
+            PerformanceCounter dataReceivedCounter = new PerformanceCounter(CategoryName, "Bytes Received/sec", NetworkCard);
+
+            //const int numberOfIterations = 10;
+
+
+
+            //float sendSum = 0;
+            //float receiveSum = 0;
+
+            //for (int index = 0; index < numberOfIterations; index++)
+            //{
+            //    sendSum += dataSentCounter.NextValue();
+            //    receiveSum += dataReceivedCounter.NextValue();
+            //}
+            //float dataSent = sendSum;
+            //float dataReceived = receiveSum;
+
+
+            //double utilization = (8 * (dataSent + dataReceived)) / (bandwidth * numberOfIterations) * 100;
+            //return utilization;
+            //base.InitPerformanceCounter();
+        }
+
+
+        //public static List<string> GetNetworkCards()
+        //{
+        //    //PerformanceCounterCategory category = new PerformanceCounterCategory(CategoryName);
+        //    //string[] instancename = category.GetInstanceNames();
+
+        //    return instancename.ToList();
+        //}
+
+
+        public override void WriteData()
+        {
+
+        }
+    }
+
     public abstract class BaseDataHandler
     {
         public string CategoryName { get; set; }

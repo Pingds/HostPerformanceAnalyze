@@ -14,7 +14,8 @@ namespace HostPerformanceAnalyze
         Memory = 3,
         Handle = 4,
         Thread = 5,
-        GMemory = 6
+        GMemory = 6,
+        Network = 7
     }
     public class BaseDataModel
     {

@@ -139,6 +139,10 @@ namespace HostPerformanceAnalyze
             memoryDataHandler.InitPerformanceCounter();
             dataHandlers.Add(memoryDataHandler);
 
+            //var networkDataHandler = new NetworkDataHandler(hostProcess);
+            //networkDataHandler.InitPerformanceCounter();
+            //dataHandlers.Add(networkDataHandler);
+
             isInited = true;
 
             this.Dispatcher.Invoke(() => { btnStart.IsEnabled = true; });
