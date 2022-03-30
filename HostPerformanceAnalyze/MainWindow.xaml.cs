@@ -120,14 +120,13 @@ namespace HostPerformanceAnalyze
             gpuDataHandler.InitPerformanceCounter();
             dataHandlers.Add(gpuDataHandler);
 
-
-            var dwmGpuDataHandler = new GPUDataHandler(dwmProcess);
-            dwmGpuDataHandler.InitPerformanceCounter();
-            dataHandlers.Add(dwmGpuDataHandler);
-
             var cpuDataHandler = new CPUDataHandler(hostProcess);
             cpuDataHandler.InitPerformanceCounter();
             dataHandlers.Add(cpuDataHandler);
+
+            var memoryDataHandler = new MemoryDataHandler(hostProcess);
+            memoryDataHandler.InitPerformanceCounter();
+            dataHandlers.Add(memoryDataHandler);
 
             var handlesDataHandler = new HandlesDataHandler(hostProcess);
             dataHandlers.Add(handlesDataHandler);
@@ -135,9 +134,9 @@ namespace HostPerformanceAnalyze
             var threadsDataHandler = new ThreadsDataHandler(hostProcess);
             dataHandlers.Add(threadsDataHandler);
 
-            var memoryDataHandler = new MemoryDataHandler(hostProcess);
-            memoryDataHandler.InitPerformanceCounter();
-            dataHandlers.Add(memoryDataHandler);
+            var dwmGpuDataHandler = new GPUDataHandler(dwmProcess);
+            dwmGpuDataHandler.InitPerformanceCounter();
+            dataHandlers.Add(dwmGpuDataHandler);
 
             //var networkDataHandler = new NetworkDataHandler(hostProcess);
             //networkDataHandler.InitPerformanceCounter();
@@ -158,10 +157,13 @@ namespace HostPerformanceAnalyze
                     Thread.Sleep(interval);
                     foreach (var dataHandler in dataHandlers)
                     {
-                        dataCount++;
                         dataHandler.WriteData();
-                        AddLog($"WriteData Count={dataCount}");
                     }
+                    dataCount++;
+                    AddLog($"WriteData Count={dataCount}");
+
+                    if (!isMonitoring)
+                        dataCollectEnd = true;
                 }
             });
         }
@@ -192,12 +194,16 @@ namespace HostPerformanceAnalyze
             }
 
         }
-
+        bool dataCollectEnd = false;
         private void btnStop_Click(object sender, RoutedEventArgs e)
         {
             isMonitoring = false;
             btnStart.IsEnabled = true;
             btnStop.IsEnabled = false;
+            while (!dataCollectEnd)
+            {
+                Thread.Sleep(1);
+            }
             var fileFullName = ExcelHelper.SaveCSV(dataHandlers);
             if (!string.IsNullOrEmpty(fileFullName))
             {

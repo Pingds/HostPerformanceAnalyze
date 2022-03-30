@@ -33,10 +33,20 @@ namespace HostPerformanceAnalyze
                 FileStream fs = new FileStream(fileFullName, System.IO.FileMode.Create, System.IO.FileAccess.Write);
                 //StreamWriter sw = new StreamWriter(fs, System.Text.Encoding.Default);
                 StreamWriter sw = new StreamWriter(fs, System.Text.Encoding.UTF8);
+                //Time	RoomsHost GPU	All GPU	RoomsHost CPU	RoomsHost Memory	Time	RoomsHost Handle	RoomsHost Thread	dwm GPU
+
                 string data = "Time,";
                 //column header
                 for (int i = 0; i < dt.Count; i++)
                 {
+                    if (i == 1)
+                    {
+                        data += "All GPU,";
+                    }
+                    if (i == 3)
+                    {
+                        data += "Time,";
+                    }
                     data += dt[i].ProcessName + " " + dt[i].DataType.ToString() + ",";
                 }
                 data = data.Substring(0, data.Length - 1);
@@ -44,12 +54,20 @@ namespace HostPerformanceAnalyze
 
                 //write row data
                 int dataRowCount = dt[0].Data.Count;
-                for (int i = 0; i < dataRowCount; i++)
+                for (int i = 0; i < dataRowCount; i++)//no need calculate value 0 case
                 {
                     data = "";
                     for (int j = 0; j < dt.Count; j++)
                     {
                         if (j == 0)
+                        {
+                            data += dt[j].Data[i].Time.ToString("HH:mm:ss") + ",";
+                        }
+                        if (j == 1)
+                        {
+                            data += dt[0].Data[i].Value + dt[5].Data[i].Value + ",";//all GPU
+                        }
+                        if (j == 3)
                         {
                             data += dt[j].Data[i].Time.ToString("HH:mm:ss") + ",";
                         }
