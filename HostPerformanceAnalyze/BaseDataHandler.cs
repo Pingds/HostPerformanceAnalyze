@@ -32,6 +32,50 @@ namespace HostPerformanceAnalyze
         }
     }
 
+    public class AllCPUDataHandler : BaseDataHandler
+    {
+        private PerformanceCounter cpuCounter = null;
+        public AllCPUDataHandler(Process process) : base(process)
+        {
+            DataType = DataType.CPU;
+            CategoryName = "Processor Information";
+            CounterName = "% Processor Utility";
+            ProcessName = "All CPU";
+        }
+
+        public override void InitPerformanceCounter()
+        {
+            try
+            {
+
+                cpuCounter = new PerformanceCounter(CategoryName, CounterName, "_Total", true);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+        }
+
+        public Process Process;
+
+        public override void WriteData()
+        {
+            BaseDataModel baseData = new BaseDataModel();
+            baseData.Time = DateTime.Now;
+            if (cpuCounter != null)
+            {
+                baseData.Value = cpuCounter.NextValue();
+                Debug.WriteLine($"Process {DataType.ToString()}: {baseData.Value}");
+            }
+            else
+            {
+                baseData.Value = 0;
+            }
+            Data.Add(baseData);
+        }
+    }
+
     public class CPUDataHandler : BaseDataHandler
     {
         private PerformanceCounter cpuCounter = null;
@@ -269,7 +313,7 @@ namespace HostPerformanceAnalyze
         public string CounterName { get; set; }
         public string ExtensionName { get; set; }
 
-        public string ProcessName { get { return InternalProcess?.ProcessName; } }
+        public string ProcessName { get; set; }
 
         public int ProcessId
         {
@@ -292,6 +336,7 @@ namespace HostPerformanceAnalyze
         public BaseDataHandler(Process process)
         {
             InternalProcess = process;
+            ProcessName = InternalProcess?.ProcessName;
             Data = new List<BaseDataModel>();
         }
 

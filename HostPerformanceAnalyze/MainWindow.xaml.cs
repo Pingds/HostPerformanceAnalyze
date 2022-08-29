@@ -138,6 +138,10 @@ namespace HostPerformanceAnalyze
             dwmGpuDataHandler.InitPerformanceCounter();
             dataHandlers.Add(dwmGpuDataHandler);
 
+            var allCpuDataHandler = new AllCPUDataHandler(null);
+            allCpuDataHandler.InitPerformanceCounter();
+            dataHandlers.Add(allCpuDataHandler);
+
             //var networkDataHandler = new NetworkDataHandler(hostProcess);
             //networkDataHandler.InitPerformanceCounter();
             //dataHandlers.Add(networkDataHandler);
